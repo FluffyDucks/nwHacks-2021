@@ -16,9 +16,9 @@ pd.set_option('display.max_rows', 500)
 pd.set_option('display.min_rows', 500)
 
 
-print("[SCRIPT]: reading data")
+# print("[SCRIPT]: reading data")
 data = pd.concat([pd.read_csv(f) for f in glob.glob('../datasets_full/**-**-202*.csv')], ignore_index=True)
-print("[SCRIPT]: reading data finished")
+# print("[SCRIPT]: reading data finished")
 
 data = data.drop(['FIPS', 'Admin2', 'Active', 'Combined_Key'], axis=1)
 
@@ -51,7 +51,7 @@ ts = ts.set_index(["Date"])
 result = pd.DataFrame()
 i = 0
 for casetype in ['Confirmed', 'Recovered', 'Deaths']:
-    print(f"=====[SCRIPT]: Current dataset: {casetype} =====")
+    # print(f"=====[SCRIPT]: Current dataset: {casetype} =====")
     dataset = ts[casetype]
 
     #-- look for the best parameters for the model
@@ -59,7 +59,7 @@ for casetype in ['Confirmed', 'Recovered', 'Deaths']:
     pdq = list(itertools.product(p, d, q))
     seasonal_pdq = [(x[0], x[1], x[2], 12) for x in list(itertools.product(p, d, q))]
 
-    print("[SCRIPT]: iterating params for optimal results using ML model")
+    # print("[SCRIPT]: iterating params for optimal results using ML model")
     params = []
     for param in pdq:
         for param_seasonal in seasonal_pdq:
@@ -85,7 +85,7 @@ for casetype in ['Confirmed', 'Recovered', 'Deaths']:
             aic = param[2]
             order = param[0]
             seasonal_order = param[1]
-    print(f"[SCRIPT]: best params => {order}, {seasonal_order}")
+    # print(f"[SCRIPT]: best params => {order}, {seasonal_order}")
 
 
     mod = sm.tsa.statespace.SARIMAX(dataset,
@@ -119,5 +119,5 @@ for casetype in ['Confirmed', 'Recovered', 'Deaths']:
     result[casetype] = pred_future.predicted_mean
     i += 1
 # '''
-
-result.to_json("output.json")
+# result.to_json("output.json")
+print(result.to_json())
