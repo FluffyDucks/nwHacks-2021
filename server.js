@@ -1,5 +1,5 @@
 const express = require("express");
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 8080;
 const app = express();
 const https = require('https');
 const MongoClient = require('mongodb').MongoClient;
@@ -33,45 +33,70 @@ async function covidData(){
 }
 
 
-// //=== MongoDB Connection ===//
-// MongoClient.connect(url, function(err, db) {
-//   if (err) throw err;
-//   console.log("Database created!");
-//   db.close();
-// });
+//===== MongoDB Setup =====//
+
+//--- MongoDB Connection
+MongoClient.connect(url, function(err, db) {
+  if (err) throw err;
+  console.log("Database Connected");
+  db.close();
+});
 
 
-// //--- create mongoDB collection ---//
-// MongoClient.connect(url, function(err, db) {
-//     if (err) throw err;
-//     let dbo = db.db("mydb");
-//     dbo.listCollections({name: "data"})
-//         .next(function(err, collinfo) {
-//             if (!collinfo) {
-//                 dbo.createCollection("data", function(err, res) {
-//                     if (err) throw err;
-//                     console.log("Collection [data] created");
-//                     db.close();
-//                 });
-//             }
-//         });
-// });
+//--- create mongoDB collection
+function createTable(tableName = null){
+    if (tableName == null){
+        console.log(`[SERVER]: no name for collection provided`);
+        return -1;
+    }
+
+    MongoClient.connect(url, function(err, db) {
+        if (err) throw err;
+        let dbo = db.db("mydb");
+        dbo.listCollections({name: tableName})
+            .next(function(err, collinfo) {
+                if (collinfo) {
+                    console.log(`[SERVER]: collection [${tableName}] already exists`);
+                    return -1;
+                }
+                else{
+                    dbo.createCollection(`${tableName}`, function(err, res) {
+                        if (err) throw err;
+                        console.log(`Collection [${tableName}] created`);
+                        db.close();
+                    });
+                }
+            });
+    });
+    return 0;
+}
 
 
-// MongoClient.connect(url, async function(err, db) {
-//     if (err) throw err;
-//     let dbo = db.db("mydb");
-//     console.log("before")
-//     let dataset = await covidData();
-//     console.log(`[SERVER]: after ${dataset}`);
+//--- insert into mongoDB
+function insertDB(){
+    let today = new Date();
 
-//     dbo.collection("data").insertMany(dataset.Countries, function(err, res) {
-//         if (err) throw err;
-//         console.log("Number of documents inserted: " + res.insertedCount);
-//         db.close();
-//     });
-// });
+    let name = `${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()}`;
+    
+    //if the table exists, insert covid data into said table
+    if(createTable(name) == 0){
+        MongoClient.connect(url, async function(err, db) {
+            if (err) throw err;
+            let dbo = db.db("mydb");
+            console.log("[SERVER]: before")
+            let dataset = await covidData();
+            console.log(`[SERVER]: after ${dataset}`);
+        
+            dbo.collection(`${name}`).insertMany(dataset.Countries, function(err, res) {
+                if (err) throw err;
+                console.log("Number of documents inserted: " + res.insertedCount);
+                db.close();
+            });
+        });
+    }
+}
 
+insertDB();
 
 
 
