@@ -5,9 +5,17 @@ const https = require('https');
 const MongoClient = require('mongodb').MongoClient;
 const url = "mongodb://localhost:27017/mydb";
 
-app.get('/api/test', async (req, res) => {
+app.get('/api/countries', async (req, res) => {
     res.json(await getCountriesFromDB());
 });
+
+app.get('/api/cases/:country', async (req,res) => {
+    if(req.params.country) {
+        res.json(await getCasesFromDB(req.params.country));
+    } else {
+        res.json({Message: "Country Not Found"});
+    }
+})
 
 //--- call covid-19 api ---//
 async function covidData() {
@@ -113,6 +121,25 @@ async function getCountriesFromDB() {
                 if (err) throw err;
                 let dbo = db.db("mydb");
                 dbo.collection(`${name}`).find({}, { projection: { _id: 0, Country: 1 } }).toArray(function (err, res) {
+                    if (err) throw err;
+                    db.close();
+                    resolve(res);
+                });
+            });
+        }
+    });
+}
+
+async function getCasesFromDB(country) {
+    return new Promise(async (resolve, reject) => {
+        let today = new Date();
+        let name = `${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()}`;
+
+        if (await createTable(name)) {
+            MongoClient.connect(url, function (err, db) {
+                if (err) throw err;
+                let dbo = db.db("mydb");
+                dbo.collection(`${name}`).findOne({Country: country}, { projection: {_id: 0, CountryCode: 0, Slug: 0, Premium: 0, Date: 0} }, function (err, res) {
                     if (err) throw err;
                     db.close();
                     resolve(res);
