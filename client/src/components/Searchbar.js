@@ -1,15 +1,12 @@
-import React, {useRef} from 'react'
-import { Form } from 'react-bootstrap'
+import React, {useState} from 'react'
+import { Typeahead } from 'react-bootstrap-typeahead'
 
 export default function Searchbar() {
-    const searchRef = useRef();
+    const [singleSelections, setSingleSelections] = useState([]);
+
     return (
         <div className="p-2">
-        <Form>
-            <Form.Group>
-                <Form.Control type="text" placeholder="Search City" ref={searchRef} required/>
-            </Form.Group>
-        </Form>
+            <Typeahead id="basic-typeahead-single" labelKey="name" placeholder="Choose a country" onChange={setSingleSelections} options={["Canada", "USA", "Mexico"]} selected={singleSelections}/>
         </div>
     )
 }
