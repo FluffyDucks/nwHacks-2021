@@ -1,11 +1,10 @@
 import React from 'react';
+import Main from './components/Main'
 
 
 function App() {
   return (
-    <div>
-      <h1> Hello World! &#128514;</h1>
-    </div>
+    <Main />
   );
 }
 
