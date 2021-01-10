@@ -1,9 +1,10 @@
 const express = require("express");
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 7000;
 const app = express();
 const https = require('https');
 const MongoClient = require('mongodb').MongoClient;
 const url = "mongodb://localhost:27017/mydb";
+const spawn = require("child_process").spawn;
 
 app.get('/api/countries', async (req, res) => {
     res.json(await getCountriesFromDB());
@@ -16,6 +17,27 @@ app.get('/api/cases/:country', async (req,res) => {
         res.json({Message: "Country Not Found"});
     }
 })
+
+app.get('/api/MLmodel/:countryName', (req,res) => {
+    const pythonProcess = spawn('python',["ML/ML-model.py", req.params.countryName]);
+
+    var response;
+    python.stdout.on('data', function (data) {
+        console.log('Pipe data from python script ...');
+        response = data;
+    });
+    python.on('close', (code) => {
+        console.log(`child process close all stdio with code ${code}`);
+    });
+
+    if (response == "[ERROR]: country not found"){
+        res.send(response)
+    }
+    else{
+        res.send(response)
+    }
+});
+
 
 //--- call covid-19 api ---//
 async function covidData() {
