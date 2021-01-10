@@ -4,7 +4,7 @@ const app = express();
 const https = require('https');
 const MongoClient = require('mongodb').MongoClient;
 const url = "mongodb://localhost:27017/mydb";
-const spawn = require("child_process").spawn;
+const {spawn} = require("child_process");
 
 app.get('/api/countries', async (req, res) => {
     res.json(await getCountriesFromDB());
@@ -18,19 +18,34 @@ app.get('/api/cases/:country', async (req,res) => {
     }
 })
 
-app.get('/api/MLmodel/:countryName', (req,res) => {
-    const python = spawn('python3', ["ML/ML-model.py", 'node.js', req.params.countryName]).on('error', function( err ){ throw err });
-
-    var response = [];
-    python.stdout.on('data', function (data) {
-        console.log('Pipe data from python script ...');
-        response.push(data);
-    });
-    python.on('close', (code) => {
-        console.log(`child process close all stdio with code ${code}`);
-        res.send(response.join(""));
-    });
+app.get('/api/MLmodel/:countryName', async (req,res) => {
+    console.log("model before");
+    let data = await modelPredictions(req.params.countryName)
+    console.log("model after")
+    
+    res.json(JSON.parse(data));
+    insertModelData(data);
+    console.log("data inserted");
 });
+
+async function modelPredictions(country){
+    return new Promise((resolve, reject) => {
+        const python = spawn('python3', ["ML/ML-model.py", country]);
+        
+        let response = [];
+        python.stdout.on('data', function (data) {
+            console.log('Pipe data from python script ...');
+            response.push(data);
+        });
+        
+        python.on('exit', (code) => {
+            console.log(code)
+            // console.log(`returning result ${response[0]}`)
+            resolve(response[0]);
+        });
+    });
+}
+
 
 
 //--- call covid-19 api ---//
@@ -124,6 +139,28 @@ async function insertDB() {
 }
 
 insertDB();
+
+async function insertModelData(data) {
+    console.log(data);
+    let today = new Date();
+
+    let name = `model-${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()}`;
+
+    //if the table exists, insert covid data into said table
+    if (await createTable(name) == 0) {
+        MongoClient.connect(url, async function (err, db) {
+            if (err) throw err;
+            let dbo = db.db("mydb");
+
+            dbo.collection(`${name}`).insertOne(data, function (err, res) {
+                if (err) throw err;
+                console.log("Number of documents inserted: " + res.insertedCount);
+                db.close();
+            });
+        });
+    }
+}
+
 
 async function getCountriesFromDB() {
     return new Promise(async (resolve, reject) => {

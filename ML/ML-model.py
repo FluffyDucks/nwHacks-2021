@@ -1,4 +1,5 @@
 import sys
+import os
 import warnings
 import glob
 import itertools
@@ -12,12 +13,19 @@ warnings.filterwarnings("ignore")
 
 countryName = sys.argv[1]
 
+# print(f"country: {countryName}")
+
 pd.set_option('display.max_rows', 500)
 pd.set_option('display.min_rows', 500)
 
 
+
+cwd = os.getcwd()
+datasetPath = os.path.join(cwd, "ML/datasets_full/")
+
+# print(f"path: {datasetPath}")
 # print("[SCRIPT]: reading data")
-data = pd.concat([pd.read_csv(f) for f in glob.glob('../datasets_full/**-**-202*.csv')], ignore_index=True)
+data = pd.concat([pd.read_csv(f) for f in glob.glob(datasetPath + '**-**-202*.csv')], ignore_index=True)
 # print("[SCRIPT]: reading data finished")
 
 data = data.drop(['FIPS', 'Admin2', 'Active', 'Combined_Key'], axis=1)
@@ -34,10 +42,6 @@ data = data.groupby(by=["Country_Region", "Date"]).sum()
 
 # print(data)
 
-if(countryName not in data.index.values):
-    print('[ERROR]: country not found')
-    quit()
-
 ts = data.loc[countryName]
 
 ts = ts[['Confirmed', 'Recovered', 'Deaths']]
@@ -47,7 +51,6 @@ ts = ts.set_index(["Date"])
 
 # print(ts)
 
-# '''
 result = pd.DataFrame()
 i = 0
 for casetype in ['Confirmed', 'Recovered', 'Deaths']:
@@ -118,6 +121,6 @@ for casetype in ['Confirmed', 'Recovered', 'Deaths']:
 
     result[casetype] = pred_future.predicted_mean
     i += 1
-# '''
 # result.to_json("output.json")
 print(result.to_json())
+# '''
