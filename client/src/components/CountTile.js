@@ -7,9 +7,7 @@ export default function CountTile({ propCountry }) {
 
 
     useEffect(() => {
-        console.log(propCountry)
         if (propCountry !== undefined && propCountry.length !== 0) {
-            console.log("true");
             fetch(`/api/cases/${propCountry}`)
                 .then(res => res.json())
                 .then(

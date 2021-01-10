@@ -18,7 +18,6 @@ export default function Searchbar({onSelectCountry}) {
     }, []);
 
     function handleSearchChange(countryRef) {
-        console.log(countryRef);
         setSingleSelections(countryRef);
         var country = countryRef;
         onSelectCountry(country);
