@@ -34,9 +34,9 @@ data = data.groupby(by=["Country_Region", "Date"]).sum()
 
 # print(data)
 
-tsC = data['Confirmed']
-tsR = data['Recovered']
-tsD = data['Deaths']
+if(countryName not in data.index.values):
+    print('[ERROR]: country not found')
+    quit()
 
 ts = data.loc[countryName]
 
