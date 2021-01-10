@@ -13,8 +13,8 @@ export default function Main() {
     }
 
     return (
-        <div className="d-flex flex-column overflow-auto" style={{height: '100vh'}}>
-            <Searchbar onSelectCountry={handleSelectCountry}/>
+        <div className="d-flex flex-column overflow-auto" style={{height: '100vh', color: "white"}}>
+            <Searchbar onSelectCountry={handleSelectCountry}/><br/>
             <CountTile propCountry={selectedCountry}/>
             <br/>
             <GraphTile/>
