@@ -6,6 +6,15 @@ const MongoClient = require('mongodb').MongoClient;
 const url = "mongodb://localhost:27017/mydb";
 const {spawn} = require("child_process");
 
+app.use(express.static(path.join(__dirname, 'build')));
+
+
+app.get('/*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'build', 'index.html'));
+});
+
+
+
 app.get('/api/countries', async (req, res) => {
     res.json(await getCountriesFromDB());
 });

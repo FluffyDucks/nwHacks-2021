@@ -4,10 +4,7 @@
   "description": "App built using React and Express",
   "main": "server.js",
   "scripts": {
-    "build": "npm run build --prefix client",
-    "dev": "nodemon server.js",
-    "client": "npm run build --prefix client",
-    "start": "concurrently \"npm run dev\" \"npm run client\""
+    "build": "node server.js"
   },
   "repository": {
     "type": "git",
