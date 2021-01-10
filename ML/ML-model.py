@@ -2,6 +2,7 @@ import sys
 import warnings
 import glob
 import itertools
+import json
 import pandas as pd
 import numpy as np
 import statsmodels.api as sm
@@ -31,86 +32,92 @@ data = data.sort_values(by=['Date'], ascending=[True])
 
 data = data.groupby(by=["Country_Region", "Date"]).sum()
 
-
 # print(data)
 
 tsC = data['Confirmed']
-tsD = data['Deaths']
 tsR = data['Recovered']
+tsD = data['Deaths']
 
-country = tsC.loc[countryName]
+ts = data.loc[countryName]
 
-country = country.resample('D').ffill().reset_index().dropna()
+ts = ts[['Confirmed', 'Recovered', 'Deaths']]
 
-country = country.set_index(["Date"])
+ts = ts.resample('D').ffill().reset_index().dropna()
+ts = ts.set_index(["Date"])
 
-# print(country)
+# print(ts)
 
 # '''
-# decomposition = sm.tsa.seasonal_decompose(canada, model='additive')
-# fig = decomposition.plot()
+result = pd.DataFrame()
+i = 0
+for casetype in ['Confirmed', 'Recovered', 'Deaths']:
+    print(f"=====[SCRIPT]: Current dataset: {casetype} =====")
+    dataset = ts[casetype]
 
-#-- look for the best parameters for the model
-p = d = q = range(0, 2)
-pdq = list(itertools.product(p, d, q))
-seasonal_pdq = [(x[0], x[1], x[2], 12) for x in list(itertools.product(p, d, q))]
+    #-- look for the best parameters for the model
+    p = d = q = range(0, 2)
+    pdq = list(itertools.product(p, d, q))
+    seasonal_pdq = [(x[0], x[1], x[2], 12) for x in list(itertools.product(p, d, q))]
 
-print("[SCRIPT]: iterating params for optimal results using ML model")
-params = []
-for param in pdq:
-    for param_seasonal in seasonal_pdq:
-        try:
-            mod = sm.tsa.statespace.SARIMAX(country,
-                                            order=param,
-                                            seasonal_order=param_seasonal,
-                                            enforce_stationarity=False,
-                                            enforce_invertibility=False)
+    print("[SCRIPT]: iterating params for optimal results using ML model")
+    params = []
+    for param in pdq:
+        for param_seasonal in seasonal_pdq:
+            try:
+                mod = sm.tsa.statespace.SARIMAX(dataset,
+                                                order=param,
+                                                seasonal_order=param_seasonal,
+                                                enforce_stationarity=False,
+                                                enforce_invertibility=False)
 
-            results = mod.fit(disp=False)
-            # print('ARIMA{}x{}12 - AIC:{}'.format(param, param_seasonal, results.aic))
-            params.append([param, param_seasonal, results.aic])
-        except:
-            continue
+                results = mod.fit(disp=False)
+                # print('ARIMA{}x{}12 - AIC:{}'.format(param, param_seasonal, results.aic))
+                params.append([param, param_seasonal, results.aic])
+            except:
+                continue
 
-aic = 100000
-order = ()
-seasonal_order = ()
-for param in params:
-    # print(f"[CURRENT]: {param}")
-    if param[2] < aic:
-        aic = param[2]
-        order = param[0]
-        seasonal_order = param[1]
-print(f"[SCRIPT]: best params => {order}, {seasonal_order}")
+    aic = 100000
+    order = ()
+    seasonal_order = ()
+    for param in params:
+        # print(f"[CURRENT]: {param}")
+        if param[2] < aic:
+            aic = param[2]
+            order = param[0]
+            seasonal_order = param[1]
+    print(f"[SCRIPT]: best params => {order}, {seasonal_order}")
 
 
-mod = sm.tsa.statespace.SARIMAX(country,
-                                order=order,
-                                seasonal_order=seasonal_order,
-                                enforce_stationarity=False,
-                                enforce_invertibility=False)
-results = mod.fit(disp=False)
+    mod = sm.tsa.statespace.SARIMAX(dataset,
+                                    order=order,
+                                    seasonal_order=seasonal_order,
+                                    enforce_stationarity=False,
+                                    enforce_invertibility=False)
+    results = mod.fit(disp=False)
 
-plt.figure(figsize=(15,6))
-plt.xticks(rotation=45)
-plt.rc('xtick', labelsize=1)
+    plt.figure(figsize=(15,6))
+    plt.xticks(rotation=45)
+    plt.rc('xtick', labelsize=1)
 
-# pred = results.get_prediction(start=pd.to_datetime('2020-12-01'), dynamic=False)
-pred_future = results.get_forecast(steps=30)
-pred_ci = pred_future.conf_int()
-ax = country.plot(label='observed', linewidth=2)
-# pred.predicted_mean.plot(ax=ax, label='Forecast', alpha=.7, figsize=(14, 7))
-pred_future.predicted_mean.plot(ax=ax, label='Forecast', alpha=.7, figsize=(14, 7))
-ax.fill_between(pred_ci.index,
-                pred_ci.iloc[:, 0],
-                pred_ci.iloc[:, 1], color='k', alpha=.2)
+    # pred = results.get_prediction(start=pd.to_datetime('2020-12-01'), dynamic=False)
+    pred_future = results.get_forecast(steps=30)
+    pred_ci = pred_future.conf_int()
+    ax = dataset.plot(label='observed', linewidth=2)
+    # pred.predicted_mean.plot(ax=ax, label='Forecast', alpha=.7, figsize=(14, 7))
+    pred_future.predicted_mean.plot(ax=ax, label='Forecast', alpha=.7, figsize=(14, 7))
+    ax.fill_between(pred_ci.index,
+                    pred_ci.iloc[:, 0],
+                    pred_ci.iloc[:, 1], color='k', alpha=.2)
 
-plt.title(f"{countryName}")
-ax.set_xlabel('Date')
-plt.savefig(f'{countryName}.png')
+    plt.title(f"{countryName}-{casetype}")
+    ax.set_xlabel('Date')
+    plt.savefig(f'{countryName}-{casetype}.png')
 
-# print(pred.predicted_mean)
-print("[SCRIPT]: Predicted values:\n", pred_future.predicted_mean)
+    # print(pred.predicted_mean)
+    # print("[SCRIPT]: Predicted values:\n", pred_future.predicted_mean)
+
+    result[casetype] = pred_future.predicted_mean
+    i += 1
 # '''
 
-result = pred_future.predicted_mean.to_json("output.json")
+result.to_json("output.json")
