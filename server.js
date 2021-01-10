@@ -1,18 +1,16 @@
 const express = require("express");
-const PORT = process.env.PORT || 8080;
+const PORT = process.env.PORT || 5000;
 const app = express();
 const https = require('https');
 const MongoClient = require('mongodb').MongoClient;
 const url = "mongodb://localhost:27017/mydb";
 
-app.get('/api/test', async (req,res) => {
-    let data1 = await covidData();
-    //console.log(data1);
-    res.json(data1);
+app.get('/api/test', async (req, res) => {
+    res.json(await getCountriesFromDB());
 });
 
 //--- call covid-19 api ---//
-async function covidData(){
+async function covidData() {
     return new Promise((resolve, reject) => {
         let data = '';
         let jsonData = [];
@@ -36,58 +34,63 @@ async function covidData(){
 //===== MongoDB Setup =====//
 
 //--- MongoDB Connection
-MongoClient.connect(url, function(err, db) {
-  if (err) throw err;
-  console.log("Database Connected");
-  db.close();
+MongoClient.connect(url, function (err, db) {
+    if (err) throw err;
+    console.log("Database Connected");
+    db.close();
 });
 
 
 //--- create mongoDB collection
-function createTable(tableName = null){
-    if (tableName == null){
-        console.log(`[SERVER]: no name for collection provided`);
-        return -1;
-    }
+async function createTable(tableName = null) {
+    return new Promise((resolve, reject) => {
 
-    MongoClient.connect(url, function(err, db) {
-        if (err) throw err;
-        let dbo = db.db("mydb");
-        dbo.listCollections({name: tableName})
-            .next(function(err, collinfo) {
-                if (collinfo) {
-                    console.log(`[SERVER]: collection [${tableName}] already exists`);
-                    return -1;
-                }
-                else{
-                    dbo.createCollection(`${tableName}`, function(err, res) {
-                        if (err) throw err;
-                        console.log(`Collection [${tableName}] created`);
-                        db.close();
-                    });
-                }
-            });
+
+        if (tableName == null) {
+            console.log(`[SERVER]: no name for collection provided`);
+            resolve(-1);
+        }
+
+        MongoClient.connect(url, function (err, db) {
+            if (err) throw err;
+            let dbo = db.db("mydb");
+            dbo.listCollections({ name: tableName })
+                .next(function (err, collInfo) {
+                    if (collInfo) {
+                        console.log(`[SERVER]: collection [${tableName}] already exists`);
+                        resolve(-1);
+                    }
+                    else {
+                        dbo.createCollection(`${tableName}`, function (err, res) {
+                            if (err) throw err;
+                            console.log(`Collection [${tableName}] created`);
+                            db.close();
+                            resolve(0);
+                        });
+                    }
+                });
+        });
     });
-    return 0;
+
 }
 
 
 //--- insert into mongoDB
-function insertDB(){
+async function insertDB() {
     let today = new Date();
 
     let name = `${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()}`;
-    
+
     //if the table exists, insert covid data into said table
-    if(createTable(name) == 0){
-        MongoClient.connect(url, async function(err, db) {
+    if (await createTable(name) == 0) {
+        MongoClient.connect(url, async function (err, db) {
             if (err) throw err;
             let dbo = db.db("mydb");
             console.log("[SERVER]: before")
             let dataset = await covidData();
             console.log(`[SERVER]: after ${dataset}`);
-        
-            dbo.collection(`${name}`).insertMany(dataset.Countries, function(err, res) {
+
+            dbo.collection(`${name}`).insertMany(dataset.Countries, function (err, res) {
                 if (err) throw err;
                 console.log("Number of documents inserted: " + res.insertedCount);
                 db.close();
@@ -98,6 +101,25 @@ function insertDB(){
 
 insertDB();
 
+async function getCountriesFromDB() {
+    return new Promise(async (resolve, reject) => {
 
+
+        let today = new Date();
+        let name = `${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()}`;
+
+        if (await createTable(name)) {
+            MongoClient.connect(url, function (err, db) {
+                if (err) throw err;
+                let dbo = db.db("mydb");
+                dbo.collection(`${name}`).find({}, { projection: { _id: 0, Country: 1 } }).toArray(function (err, res) {
+                    if (err) throw err;
+                    db.close();
+                    resolve(res);
+                });
+            });
+        }
+    });
+}
 
 app.listen(PORT, () => console.log(`Listening on ${PORT}`));
