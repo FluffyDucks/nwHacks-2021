@@ -86,149 +86,149 @@ async function covidData() {
 //===== MongoDB Setup =====//
 
 //--- MongoDB Connection
-MongoClient.connect(url, function (err, db) {
-    if (err) throw err;
-    console.log("Database Connected");
-    db.close();
-});
+// MongoClient.connect(url, function (err, db) {
+//     if (err) throw err;
+//     console.log("Database Connected");
+//     db.close();
+// });
 
 
-//--- create mongoDB collection
-async function createTable(tableName = null) {
-    return new Promise((resolve, reject) => {
+// //--- create mongoDB collection
+// async function createTable(tableName = null) {
+//     return new Promise((resolve, reject) => {
 
 
-        if (tableName == null) {
-            console.log(`[SERVER]: no name for collection provided`);
-            resolve(-1);
-        }
+//         if (tableName == null) {
+//             console.log(`[SERVER]: no name for collection provided`);
+//             resolve(-1);
+//         }
 
-        MongoClient.connect(url, function (err, db) {
-            if (err) throw err;
-            let dbo = db.db("mydb");
-            dbo.listCollections({ name: tableName })
-                .next(function (err, collInfo) {
-                    if (collInfo) {
-                        console.log(`[SERVER]: collection [${tableName}] already exists`);
-                        resolve(-1);
-                    }
-                    else {
-                        dbo.createCollection(`${tableName}`, function (err, res) {
-                            if (err) throw err;
-                            console.log(`Collection [${tableName}] created`);
-                            db.close();
-                            resolve(0);
-                        });
-                    }
-                });
-        });
-    });
+//         MongoClient.connect(url, function (err, db) {
+//             if (err) throw err;
+//             let dbo = db.db("mydb");
+//             dbo.listCollections({ name: tableName })
+//                 .next(function (err, collInfo) {
+//                     if (collInfo) {
+//                         console.log(`[SERVER]: collection [${tableName}] already exists`);
+//                         resolve(-1);
+//                     }
+//                     else {
+//                         dbo.createCollection(`${tableName}`, function (err, res) {
+//                             if (err) throw err;
+//                             console.log(`Collection [${tableName}] created`);
+//                             db.close();
+//                             resolve(0);
+//                         });
+//                     }
+//                 });
+//         });
+//     });
 
-}
+// }
 
 
-//--- insert into mongoDB
-async function insertDB() {
-    let today = new Date();
+// //--- insert into mongoDB
+// async function insertDB() {
+//     let today = new Date();
 
-    let name = `${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()}`;
+//     let name = `${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()}`;
 
-    //if the table exists, insert covid data into said table
-    if (await createTable(name) == 0) {
-        MongoClient.connect(url, async function (err, db) {
-            if (err) throw err;
-            let dbo = db.db("mydb");
-            console.log("[SERVER]: before")
-            let dataset = await covidData();
-            console.log(`[SERVER]: after ${dataset}`);
+//     //if the table exists, insert covid data into said table
+//     if (await createTable(name) == 0) {
+//         MongoClient.connect(url, async function (err, db) {
+//             if (err) throw err;
+//             let dbo = db.db("mydb");
+//             console.log("[SERVER]: before")
+//             let dataset = await covidData();
+//             console.log(`[SERVER]: after ${dataset}`);
 
-            dbo.collection(`${name}`).insertMany(dataset.Countries, function (err, res) {
-                if (err) throw err;
-                console.log("Number of documents inserted: " + res.insertedCount);
-                db.close();
-            });
-        });
-    }
-}
+//             dbo.collection(`${name}`).insertMany(dataset.Countries, function (err, res) {
+//                 if (err) throw err;
+//                 console.log("Number of documents inserted: " + res.insertedCount);
+//                 db.close();
+//             });
+//         });
+//     }
+// }
 
-insertDB();
+// insertDB();
 
-async function insertModelData(data, country) {
-    console.log(data);
-    let today = new Date();
+// async function insertModelData(data, country) {
+//     console.log(data);
+//     let today = new Date();
 
-    let name = `${country}-${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()}`;
+//     let name = `${country}-${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()}`;
 
-    //if the table exists, insert covid data into said table
-    if (await createTable(name) == 0) {
-        MongoClient.connect(url, async function (err, db) {
-            if (err) throw err;
-            let dbo = db.db("mydb");
+//     //if the table exists, insert covid data into said table
+//     if (await createTable(name) == 0) {
+//         MongoClient.connect(url, async function (err, db) {
+//             if (err) throw err;
+//             let dbo = db.db("mydb");
 
-            dbo.collection(`${name}`).insertOne(data, function (err, res) {
-                if (err) throw err;
-                console.log("Number of documents inserted: " + res.insertedCount);
-                db.close();
-            });
-        });
-    }
-}
+//             dbo.collection(`${name}`).insertOne(data, function (err, res) {
+//                 if (err) throw err;
+//                 console.log("Number of documents inserted: " + res.insertedCount);
+//                 db.close();
+//             });
+//         });
+//     }
+// }
 
-async function getCountriesFromDB() {
-    return new Promise(async (resolve, reject) => {
-        let today = new Date();
-        let name = `${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()}`;
+// async function getCountriesFromDB() {
+//     return new Promise(async (resolve, reject) => {
+//         let today = new Date();
+//         let name = `${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()}`;
 
-        if (await createTable(name)) {
-            MongoClient.connect(url, function (err, db) {
-                if (err) throw err;
-                let dbo = db.db("mydb");
-                dbo.collection(`${name}`).find({}, { projection: { _id: 0, Country: 1 } }).toArray(function (err, res) {
-                    if (err) throw err;
-                    db.close();
-                    resolve(res);
-                });
-            });
-        }
-    });
-}
+//         if (await createTable(name)) {
+//             MongoClient.connect(url, function (err, db) {
+//                 if (err) throw err;
+//                 let dbo = db.db("mydb");
+//                 dbo.collection(`${name}`).find({}, { projection: { _id: 0, Country: 1 } }).toArray(function (err, res) {
+//                     if (err) throw err;
+//                     db.close();
+//                     resolve(res);
+//                 });
+//             });
+//         }
+//     });
+// }
 
-async function getCasesFromDB(country) {
-    return new Promise(async (resolve, reject) => {
-        let today = new Date();
-        let name = `${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()}`;
+// async function getCasesFromDB(country) {
+//     return new Promise(async (resolve, reject) => {
+//         let today = new Date();
+//         let name = `${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()}`;
 
-        if (await createTable(name)) {
-            MongoClient.connect(url, function (err, db) {
-                if (err) throw err;
-                let dbo = db.db("mydb");
-                dbo.collection(`${name}`).findOne({Country: country}, { projection: {_id: 0, CountryCode: 0, Slug: 0, Premium: 0, Date: 0} }, function (err, res) {
-                    if (err) throw err;
-                    db.close();
-                    resolve(res);
-                });
-            });
-        }
-    });
-}
+//         if (await createTable(name)) {
+//             MongoClient.connect(url, function (err, db) {
+//                 if (err) throw err;
+//                 let dbo = db.db("mydb");
+//                 dbo.collection(`${name}`).findOne({Country: country}, { projection: {_id: 0, CountryCode: 0, Slug: 0, Premium: 0, Date: 0} }, function (err, res) {
+//                     if (err) throw err;
+//                     db.close();
+//                     resolve(res);
+//                 });
+//             });
+//         }
+//     });
+// }
 
-async function getModelPredictions(country){
-    return new Promise(async (resolve, reject) => {
-        let today = new Date();
-        let name = `${country}-${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()}`;
+// async function getModelPredictions(country){
+//     return new Promise(async (resolve, reject) => {
+//         let today = new Date();
+//         let name = `${country}-${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()}`;
 
-        if (await createTable(name)) {
-            MongoClient.connect(url, function (err, db) {
-                if (err) throw err;
-                let dbo = db.db("mydb");
-                dbo.collection(`${name}`).find(function (err, res) {
-                    if (err) throw err;
-                    db.close();
-                    resolve(res);
-                });
-            });
-        }
-    });
-}
+//         if (await createTable(name)) {
+//             MongoClient.connect(url, function (err, db) {
+//                 if (err) throw err;
+//                 let dbo = db.db("mydb");
+//                 dbo.collection(`${name}`).find(function (err, res) {
+//                     if (err) throw err;
+//                     db.close();
+//                     resolve(res);
+//                 });
+//             });
+//         }
+//     });
+// }
 
 app.listen(PORT, () => console.log(`Listening on ${PORT}`));
