@@ -5,34 +5,32 @@ const https = require('https');
 const MongoClient = require('mongodb').MongoClient;
 const url = "mongodb://localhost:27017/mydb";
 
-app.get('/api/test', (req,res) => {
-    let testObject = [{id:0, description: "idk something or other"}, {id:1, description: "Another one"}];
-    res.json(testObject);
-    console.log("Sent Items");
+app.get('/api/test', async (req,res) => {
+    let data1 = await covidData();
+    //console.log(data1);
+    res.json(data1);
 });
 
 //--- call covid-19 api ---//
-// async function covidData(){
-//     return new Promise((resolve, reject) => {
-//         var data = '';
-//         https.get('https://api.covid19api.com/summary', (resp) => {
-//             // A chunk of data has been received.
-//             resp.on('data', (chunk) => {
-//                 data += chunk;
-//             });
-//             // The whole response has been received. Print out the result.
-//             resp.on('end', () => {
-//                 console.log(JSON.parse(data));
-//                 data = JSON.parse(data);
-//             });
-//         }).on("error", (err) => {
-//             console.log("Error: ", err.message);
-//         });
-//             console.log(`[SERVER]: covid data loaded`);
-//             console.log("[SERVER]:", data);
-//             resolve(data);
-//     });
-// }
+async function covidData(){
+    return new Promise((resolve, reject) => {
+        let data = '';
+        let jsonData = [];
+        https.get('https://api.covid19api.com/summary', (resp) => {
+            // A chunk of data has been received.
+            resp.on('data', (chunk) => {
+                data += chunk;
+            });
+            // The whole response has been received. Print out the result.
+            resp.on('end', () => {
+                jsonData = JSON.parse(data);
+                resolve(jsonData);
+            });
+        }).on("error", (err) => {
+            console.log("Error: ", err.message);
+        });
+    });
+}
 
 
 // //=== MongoDB Connection ===//
