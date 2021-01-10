@@ -19,23 +19,17 @@ app.get('/api/cases/:country', async (req,res) => {
 })
 
 app.get('/api/MLmodel/:countryName', (req,res) => {
-    const pythonProcess = spawn('python',["ML/ML-model.py", req.params.countryName]);
+    const python = spawn('python3', ["ML/ML-model.py", 'node.js', req.params.countryName]).on('error', function( err ){ throw err });
 
-    var response;
+    var response = [];
     python.stdout.on('data', function (data) {
         console.log('Pipe data from python script ...');
-        response = data;
+        response.push(data);
     });
     python.on('close', (code) => {
         console.log(`child process close all stdio with code ${code}`);
+        res.send(response.join(""));
     });
-
-    if (response == "[ERROR]: country not found"){
-        res.send(response)
-    }
-    else{
-        res.send(response)
-    }
 });
 
 
