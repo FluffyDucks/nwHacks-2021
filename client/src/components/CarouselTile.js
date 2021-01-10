@@ -40,7 +40,7 @@ export default function CarouselTile({onButtonClick}) {
                 <img src={fourthImage} alt="test" className="img-thumbnail" width="250" style={{marginTop: "10%", width: "60vw", maxWidth: "400px"}}/>
                 <Carousel.Caption>
                     <h3>Yet the World Moved Forward</h3>
-                    <p>Multiple COVID-19 vaccines were developed by the end of December 2020. As of January 8th, 2021, 17.7 million doses of COVID-19 vaccine had been administered</p>
+                    <p>Multiple COVID-19 vaccines were developed. As of January 8th, 2021, 17.7 million doses of COVID-19 vaccine had been administered</p>
                 </Carousel.Caption>
             </Carousel.Item>
             <Carousel.Item className="text-center"  style={{width: "100vw", height: "100vh", background: "grey"}} >
