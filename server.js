@@ -24,7 +24,7 @@ app.get('/api/MLmodel/:countryName', async (req,res) => {
     console.log("model after")
     
     res.json(JSON.parse(data));
-    insertModelData(data);
+    //insertModelData(data);
     console.log("data inserted");
 });
 

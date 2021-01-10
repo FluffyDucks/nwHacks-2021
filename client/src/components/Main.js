@@ -1,8 +1,8 @@
 import React, {useState} from 'react'
 import Searchbar from './Searchbar'
 import CountTile from './CountTile'
+import PredictTile from './PredictTile'
 import GraphTile from './GraphTile'
-import ML from './MachineLearningTile'
 
 export default function Main() {
 
@@ -19,7 +19,7 @@ export default function Main() {
             <CountTile propCountry={selectedCountry}/>
             <br/>
             <h4 className="text-center"> Tomorrow's Totals (Estimated)</h4>
-            <CountTile propCountry={selectedCountry}/>
+            <PredictTile propCountry={selectedCountry}/>
             <br/>
             <GraphTile/>
         </div>
